@@ -1,6 +1,6 @@
 # MediaTracker
 
-![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql\&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb\&logoColor=white) ![Java](https://img.shields.io/badge/Java-007396?logo=java\&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?logo=spring\&logoColor=white) ![Maven](https://img.shields.io/badge/Maven-005C4B?logo=apachemaven\&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql\&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb\&logoColor=white) ![Java](https://img.shields.io/badge/Java-007396?logo=java\&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?logo=spring\&logoColor=white) ![Maven](https://img.shields.io/badge/Maven-005C4B?logo=apachemaven\&logoColor=white). ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?logo=swagger&logoColor=black)
 
 Realizado por: Alberto Nieto Lozano y Alejandro Prieto Mellado
 
@@ -19,7 +19,82 @@ API REST para registrar obras (videojuegos, películas, libros, series), sus res
 
 ---
 
-## 2) Tema y reglas de negocio
+## 2) Modelo SQL - entidades y relaciones
+
+### Entidades JPA
+
+* `Usuario` (`usuarios`): `id`, `nombre`, `email` único.
+* `Plataforma` (`plataformas`): `id`, `nombre` único.
+* `Obra` (`obras`):
+
+  * `id`, `titulo`, `tipo`, `descripcion`, `fechaLanzamiento`, `estado`, `fechaRegistro`.
+  * FK: `plataforma_id`, `creador_id`.
+* `Resena` (`resenas`): `id`, `nota`, `comentario`, `fecha`, `usuario_id`, `obra_id`.
+
+### Persistencia y restricciones
+
+* Gestionado con JPA/Hibernate.
+* `spring.jpa.hibernate.ddl-auto=update` para evolución de esquema en desarrollo.
+* Unicidad en `usuarios.email` y `plataformas.nombre`.
+
+### Relaciones
+
+* `Obra` N:1 `Usuario` (creador)
+* `Obra` N:1 `Plataforma`
+* `Resena` N:1 `Usuario`
+* `Resena` N:1 `Obra`
+
+### Diagrama entidad-relación
+
+```mermaid
+erDiagram
+    USUARIO ||--o{ OBRA : "crea"
+    PLATAFORMA ||--o{ OBRA : "aloja"
+    USUARIO ||--o{ RESENA : "escribe"
+    OBRA ||--o{ RESENA : "tiene"
+
+    USUARIO {
+        bigint id PK
+        varchar nombre
+        varchar email UK
+    }
+
+    PLATAFORMA {
+        bigint id PK
+        varchar nombre UK
+    }
+
+    OBRA {
+        bigint id PK
+        varchar titulo
+        enum tipo
+        text descripcion
+        date fechaLanzamiento
+        enum estado
+        datetime fechaRegistro
+        bigint plataforma_id FK
+        bigint creador_id FK
+    }
+
+    RESENA {
+        bigint id PK
+        int nota
+        text comentario
+        datetime fecha
+        bigint usuario_id FK
+        bigint obra_id FK
+    }
+```
+
+### Consultas SQL relevantes
+
+* Filtrado combinado de obras por `tipo`, `estado` y `creador` con paginación.
+* Consulta de obras con reseñas mediante `JOIN` (`findObrasConResenas`).
+* Cálculo de media de nota por tipo de obra (`mediaNotaPorTipo`).
+
+---
+
+## 3) Tema y reglas de negocio
 
 ### Tema
 
@@ -38,7 +113,7 @@ Seguimiento centralizado de obras de tipos `VIDEOJUEGO`, `PELICULA`, `LIBRO`, `S
 
 ---
 
-## 3) Qué se guarda en Mongo y por qué
+## 4) Qué se guarda en Mongo y por qué
 
 ### Colecciones y propósito
 
@@ -113,81 +188,6 @@ Seguimiento centralizado de obras de tipos `VIDEOJUEGO`, `PELICULA`, `LIBRO`, `S
 * SQL almacena el estado vigente con relaciones.
 * Mongo guarda trazabilidad en JSON flexible para auditoría e historial.
 * Separación evita sobrecargar tablas relacionales con información temporal y mejora observabilidad.
-
----
-
-## 4) Modelo SQL - entidades y relaciones
-
-### Entidades JPA
-
-* `Usuario` (`usuarios`): `id`, `nombre`, `email` único.
-* `Plataforma` (`plataformas`): `id`, `nombre` único.
-* `Obra` (`obras`):
-
-  * `id`, `titulo`, `tipo`, `descripcion`, `fechaLanzamiento`, `estado`, `fechaRegistro`.
-  * FK: `plataforma_id`, `creador_id`.
-* `Resena` (`resenas`): `id`, `nota`, `comentario`, `fecha`, `usuario_id`, `obra_id`.
-
-### Persistencia y restricciones
-
-* Gestionado con JPA/Hibernate.
-* `spring.jpa.hibernate.ddl-auto=update` para evolución de esquema en desarrollo.
-* Unicidad en `usuarios.email` y `plataformas.nombre`.
-
-### Relaciones
-
-* `Obra` N:1 `Usuario` (creador)
-* `Obra` N:1 `Plataforma`
-* `Resena` N:1 `Usuario`
-* `Resena` N:1 `Obra`
-
-### Diagrama entidad-relación
-
-```mermaid
-erDiagram
-    USUARIO ||--o{ OBRA : "crea"
-    PLATAFORMA ||--o{ OBRA : "aloja"
-    USUARIO ||--o{ RESENA : "escribe"
-    OBRA ||--o{ RESENA : "tiene"
-
-    USUARIO {
-        bigint id PK
-        varchar nombre
-        varchar email UK
-    }
-
-    PLATAFORMA {
-        bigint id PK
-        varchar nombre UK
-    }
-
-    OBRA {
-        bigint id PK
-        varchar titulo
-        enum tipo
-        text descripcion
-        date fechaLanzamiento
-        enum estado
-        datetime fechaRegistro
-        bigint plataforma_id FK
-        bigint creador_id FK
-    }
-
-    RESENA {
-        bigint id PK
-        int nota
-        text comentario
-        datetime fecha
-        bigint usuario_id FK
-        bigint obra_id FK
-    }
-```
-
-### Consultas SQL relevantes
-
-* Filtrado combinado de obras por `tipo`, `estado` y `creador` con paginación.
-* Consulta de obras con reseñas mediante `JOIN` (`findObrasConResenas`).
-* Cálculo de media de nota por tipo de obra (`mediaNotaPorTipo`).
 
 ---
 
