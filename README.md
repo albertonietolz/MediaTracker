@@ -4,7 +4,8 @@
 
 Realizado por: Alberto Nieto Lozano y Alejandro Prieto Mellado
 
-API REST para registrar obras (videojuegos, películas, libros, series), sus reseñas y su trazabilidad de cambios. Combina SQL (MySQL + JPA/Hibernate) para el dato transaccional y MongoDB para auditoría e historial.
+API REST para registrar obras (videojuegos, películas, libros, series), sus reseñas y su trazabilidad de cambios. 
+Combina SQL (MySQL + JPA/Hibernate) para el dato transaccional y MongoDB para auditoría e historial.
 
 ---
 
