@@ -1,4 +1,3 @@
-Aplica todo exceptuando los emojis:
 # MediaTracker
 
 ![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql\&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb\&logoColor=white) ![Java](https://img.shields.io/badge/Java-007396?logo=java\&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?logo=spring\&logoColor=white) ![Maven](https://img.shields.io/badge/Maven-005C4B?logo=apachemaven\&logoColor=white) ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?logo=swagger&logoColor=black)
