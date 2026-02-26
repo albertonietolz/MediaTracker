@@ -1,50 +1,7 @@
-````markdown
-<h1 align="center">MediaTracker</h1>
+Aplica todo exceptuando los emojis:
+# MediaTracker
 
-<p align="center">
-  API REST para registrar obras y su trazabilidad con SQL + MongoDB
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/MySQL-4479A1?logo=mysql&logoColor=white"/>
-  <img src="https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Java-007396?logo=java&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?logo=springboot&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Maven-005C4B?logo=apachemaven&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Swagger-85EA2D?logo=swagger&logoColor=black"/>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/status-en%20desarrollo-blue"/>
-  <img src="https://img.shields.io/badge/license-MIT-lightgrey"/>
-</p>
-
----
-
-## Índice
-
-- [Qué hace el proyecto](#1-qué-hace-el-proyecto)
-- [Modelo SQL](#2-modelo-sql---entidades-y-relaciones)
-- [Tema y reglas de negocio](#3-tema-y-reglas-de-negocio)
-- [Mongo](#4-qué-se-guarda-en-mongo-y-por-qué)
-- [Estructura](#5-estructura-del-proyecto)
-- [Endpoints](#6-endpoints-principales)
-- [Despliegue](#7-script-y-guía-de-despliegue-local)
-- [Mejoras](#8-mejoras-pendientes-y-aprendizajes)
-
----
-
-## Arquitectura general
-
-```mermaid
-flowchart LR
-    Client --> Controller
-    Controller --> Service
-    Service --> MySQL[(MySQL)]
-    Service --> MongoDB[(MongoDB)]
-````
-
----
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?logo=mysql\&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb\&logoColor=white) ![Java](https://img.shields.io/badge/Java-007396?logo=java\&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?logo=spring\&logoColor=white) ![Maven](https://img.shields.io/badge/Maven-005C4B?logo=apachemaven\&logoColor=white) ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?logo=swagger&logoColor=black)
 
 Realizado por: Alberto Nieto Lozano y Alejandro Prieto Mellado
 
@@ -83,7 +40,7 @@ API REST para registrar obras (videojuegos, películas, libros, series), sus res
 
 ### Relaciones
 
-* `Obra` N:1 `Usuario`
+* `Obra` N:1 `Usuario` (creador)
 * `Obra` N:1 `Plataforma`
 * `Resena` N:1 `Usuario`
 * `Resena` N:1 `Obra`
@@ -142,19 +99,18 @@ erDiagram
 
 ### Tema
 
-Seguimiento centralizado de obras de tipos `VIDEOJUEGO`, `PELICULA`, `LIBRO`, `SERIE` y su valoración mediante reseñas.
+Seguimiento centralizado de obras de tipos `VIDEOJUEGO`, `PELICULA`, `LIBRO`, `SERIE` y su valoración mediante reseñas. Separación clara entre dato transaccional relacional y dato de trazabilidad documental.
 
 ### Reglas de negocio
 
-* Una obra requiere `titulo`, `tipo`, `estado`, `usuarioId` y `plataformaNombre`.
+* Una obra requiere `titulo`, `tipo`, `estado`, `usuarioId` y `plataformaNombre`. Si falta alguno se rechaza la operación.
 * `estado` normalizado con enum `PENDIENTE`, `EN_PROGRESO`, `COMPLETADO`, `ABANDONADO`.
 * `tipo` normalizado con enum `VIDEOJUEGO`, `PELICULA`, `LIBRO`, `SERIE`.
-* Reseña requiere `usuarioId`, `obraId` y `nota`.
-* `nota` validada entre 0 y 10.
-* Creación y actualización de obra exige existencia del usuario creador.
-* Si la plataforma no existe, se crea automáticamente.
-* Operaciones generan eventos en Mongo con tipos `CREATE_*`, `UPDATE_*`, `DELETE_*`.
-* Actualización de obra almacena snapshot `antes` y `despues`.
+* Reseña requiere `usuarioId`, `obraId` y `nota`. `nota` validada entre 0 y 10.
+* Creación/actualización de obra exige existencia del usuario creador.
+* Si la plataforma indicada no existe, se crea automáticamente y se vincula a la obra.
+* Operaciones de obra y reseña generan eventos en Mongo con tipos `CREATE_*`, `UPDATE_*`, `DELETE_*`.
+* Al actualizar una obra se almacena un historial con snapshot `antes` y `despues`.
 
 ---
 
@@ -162,21 +118,21 @@ Seguimiento centralizado de obras de tipos `VIDEOJUEGO`, `PELICULA`, `LIBRO`, `S
 
 ### Colecciones y propósito
 
-#### `eventos`
+1. `eventos`
 
-Auditoría operativa de acciones sobre entidades.
+   * Auditoría operativa de acciones sobre entidades.
+   * Campos principales: `timestamp`, `userId`, `entityType`, `entityId`, `type`, `payload`.
+   * Ejemplo de `type`: `CREATE_OBRA`, `UPDATE_OBRA`, `DELETE_OBRA`, `CREATE_RESENA`, `UPDATE_RESENA`, `DELETE_RESENA`.
 
-Campos:
-`timestamp`, `userId`, `entityType`, `entityId`, `type`, `payload`.
+2. `historial_obras`
 
-#### `historial_obras`
-
-Trazabilidad detallada de cambios en obras.
-
-Campos:
-`obraId`, `userId`, `timestamp`, `accion`, `antes`, `despues`.
+   * Trazabilidad detallada de cambios en obras.
+   * Campos: `obraId`, `userId`, `timestamp`, `accion`, `antes`, `despues`.
+   * Se usa para conservar snapshot anterior y posterior en actualizaciones.
 
 ### Ejemplos de documento
+
+`eventos`:
 
 ```json
 {
@@ -194,6 +150,8 @@ Campos:
 }
 ```
 
+`historial_obras`:
+
 ```json
 {
   "_id": "65f8b1c2d3e4f5a6b7c8d9e0",
@@ -201,67 +159,108 @@ Campos:
   "userId": 1,
   "timestamp": "2026-02-22T15:20:18.456Z",
   "accion": "UPDATE_OBRA",
-  "antes": { },
-  "despues": { }
+  "antes": {
+    "id": 5,
+    "titulo": "Elden Ring",
+    "tipo": "VIDEOJUEGO",
+    "estado": "EN_PROGRESO",
+    "descripcion": "RPG",
+    "plataformaNombre": "Steam"
+  },
+  "despues": {
+    "id": 5,
+    "titulo": "Elden Ring",
+    "tipo": "VIDEOJUEGO",
+    "estado": "COMPLETADO",
+    "descripcion": "RPG - actualizado",
+    "plataformaNombre": "Steam"
+  }
 }
 ```
 
-> Justificación arquitectónica
-> SQL almacena el estado vigente con relaciones.
-> Mongo guarda trazabilidad en JSON flexible para auditoría e historial.
+### Consultas Mongo implementadas
+
+* Buscar eventos por `userId`, por `entityId` y por rango de fechas.
+* Buscar historial por `obraId`, por `userId` y por rango de fechas.
+* Agregación `cambios-por-accion` para contar modificaciones por tipo de acción.
+
+### Justificación
+
+* SQL almacena el estado vigente con relaciones.
+* Mongo guarda trazabilidad en JSON flexible para auditoría e historial.
+* Separación evita sobrecargar tablas relacionales con información temporal y mejora observabilidad.
 
 ---
 
 ## 5) Estructura del proyecto
 
-```text
+```
 src/main/java/com/tuapp
 ├── config/
-├── controller/
-├── domain/
-├── dto/
-├── mongo/
-├── repository/
-└── service/
+├── controller/             # Endpoints REST
+├── domain/                 # Entidades JPA
+├── dto/                    # DTOs de entrada y salida
+├── mongo/                  # Documentos y repositorios Mongo
+├── repository/             # Repositorios JPA
+└── service/                # Lógica de negocio e integración SQL-Mongo
 ```
+
+### Capas principales
+
+* **Controller**: recibe HTTP, valida request y devuelve response.
+* **Service**: aplica reglas, persiste en SQL y registra evidencia en Mongo.
+* **Repository**: acceso a datos con JPA y MongoRepository.
+* **DTO**: contrato de API que evita exponer entidades directamente.
 
 ---
 
 ## 6) Endpoints principales
 
-### Endpoints SQL
+### SQL (CRUD)
 
-| Método | Endpoint               |
-| ------ | ---------------------- |
-| POST   | /usuarios              |
-| GET    | /usuarios              |
-| PUT    | /usuarios/{id}         |
-| DELETE | /usuarios/{id}         |
-| POST   | /plataformas           |
-| GET    | /plataformas           |
-| PUT    | /plataformas/{id}      |
-| DELETE | /plataformas/{id}      |
-| POST   | /obras                 |
-| GET    | /obras                 |
-| GET    | /obras/{id}            |
-| PUT    | /obras/{id}            |
-| DELETE | /obras/{id}            |
-| POST   | /resenas               |
-| GET    | /resenas/obra/{obraId} |
-| PUT    | /resenas/{id}          |
-| DELETE | /resenas/{id}          |
+* `POST /usuarios`
 
-### Endpoints Mongo
+* `GET /usuarios`
 
-| Método | Endpoint                                     |
-| ------ | -------------------------------------------- |
-| GET    | /eventos/usuario/{userId}                    |
-| GET    | /eventos/entidad/{entityId}                  |
-| GET    | /eventos/rango                               |
-| GET    | /historial-obras/obra/{obraId}               |
-| GET    | /historial-obras/usuario/{userId}            |
-| GET    | /historial-obras/rango                       |
-| GET    | /historial-obras/metricas/cambios-por-accion |
+* `PUT /usuarios/{id}`
+
+* `DELETE /usuarios/{id}`
+
+* `POST /plataformas`
+
+* `GET /plataformas`
+
+* `PUT /plataformas/{id}`
+
+* `DELETE /plataformas/{id}`
+
+* `POST /obras`
+
+* `GET /obras`
+
+* `GET /obras/{id}`
+
+* `PUT /obras/{id}`
+
+* `DELETE /obras/{id}`
+
+* `POST /resenas`
+
+* `GET /resenas/obra/{obraId}`
+
+* `PUT /resenas/{id}`
+
+* `DELETE /resenas/{id}`
+
+### Mongo (consulta de trazabilidad)
+
+* `GET /eventos/usuario/{userId}`
+* `GET /eventos/entidad/{entityId}`
+* `GET /eventos/rango?inicio=...&fin=...`
+* `GET /historial-obras/obra/{obraId}`
+* `GET /historial-obras/usuario/{userId}`
+* `GET /historial-obras/rango?inicio=...&fin=...`
+* `GET /historial-obras/metricas/cambios-por-accion`
 
 ---
 
@@ -269,12 +268,16 @@ src/main/java/com/tuapp
 
 ### Requisitos
 
-| Requisito | Versión          |
-| --------- | ---------------- |
-| Java      | 17               |
-| Maven     | 3.9+             |
-| MongoDB   | Community Server |
-| MySQL     | Server           |
+* Java 17
+* Maven 3.9 o superior
+* MongoDB Community Server
+* MySQL Server
+
+### Preparar MySQL y Mongo (instalación local)
+
+1. Tener MySQL en `localhost:3306`.
+2. Tener MongoDB en `localhost:27017`.
+3. Crear base de datos SQL `mediatracker` y usuario:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS mediatracker;
@@ -283,12 +286,23 @@ GRANT ALL PRIVILEGES ON mediatracker.* TO 'mediatracker_user'@'%';
 FLUSH PRIVILEGES;
 ```
 
+### Verificar configuración
+
+Valores por defecto en `src/main/resources/application.properties`:
+
+* MySQL: `jdbc:mysql://localhost:3306/mediatracker`
+* Mongo: `mongodb://localhost:27017/mediatracker`
+
+### Ejecutar la API
+
 ```powershell
 mvn clean spring-boot:run
 ```
 
-API: `http://localhost:8080`
-Swagger UI: `http://localhost:8080/swagger-ui.html`
+URLs útiles:
+
+* API: `http://localhost:8080`
+* Swagger UI: `http://localhost:8080/swagger-ui.html`
 
 ---
 
@@ -297,15 +311,12 @@ Swagger UI: `http://localhost:8080/swagger-ui.html`
 ### Mejoras pendientes
 
 * Añadir autenticación y autorización con Spring Security y JWT.
-* Añadir tests de integración.
-* Exponer endpoint `mediaNotaPorTipo`.
-* Manejo transaccional explícito con `@Transactional`.
+* Añadir tests de integración y cubrir casos límite.
+* Exponer endpoint para media de nota por tipo `mediaNotaPorTipo`.
+* Fortalecer el manejo transaccional explícito con `@Transactional` en flujos compuestos.
 
 ### Aprendizajes
 
-> Modelado relacional frente a documental.
-> Integración SQL y Mongo sin duplicar lógica.
-> Diseño de auditoría trazable.
-
-```
-```
+* Cuándo modelar relacional frente a documental.
+* Cómo integrar SQL y Mongo sin duplicar lógica.
+* Cómo diseñar auditoría trazable para cambios críticos.
