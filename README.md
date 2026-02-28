@@ -7,8 +7,8 @@
 ![Maven](https://img.shields.io/badge/Maven-005C4B?logo=apachemaven\&logoColor=white)
 ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?logo=swagger\&logoColor=black)
 
-**Autor:** Alberto Nieto Lozano
-**Contexto:** Proyecto académico desarrollado para el CFGS Desarrollo de Aplicaciones Multiplataforma.
+**Autor:** Alberto Nieto Lozano  
+**Contexto:** Proyecto académico desarrollado para el CFGS Desarrollo de Aplicaciones Multiplataforma.  
 Repositorio publicado como muestra técnica de arquitectura, modelado y diseño de API.
 
 ---
