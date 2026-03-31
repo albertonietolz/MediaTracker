@@ -7,115 +7,115 @@
 ![Maven](https://img.shields.io/badge/Maven-005C4B?logo=apachemaven\&logoColor=white)
 ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?logo=swagger\&logoColor=black)
 
-**Autor:** Alberto Nieto Lozano  
-**Contexto:** Proyecto desarrollado como tarea para el CFGS Desarrollo de Aplicaciones Multiplataforma.  
-Repositorio publicado como muestra técnica de arquitectura, modelado y diseño de API.
+**Author:** Alberto Nieto Lozano  
+**Context:** Project developed as an assignment for the Higher Vocational Training in Multiplatform Application Development.  
+Repository published as a technical showcase of architecture, data modeling, and API design.
 
 ---
 
-## 1. Descripción
+## 1. Description
 
-MediaTracker es una API REST para la gestión de obras culturales y sus reseñas, con un sistema de trazabilidad que separa:
+MediaTracker is a REST API for managing cultural works and their reviews, with a traceability system that separates:
 
-* Estado transaccional en base de datos relacional.
-* Auditoría e historial de cambios en base documental.
+* Transactional state in a relational database.
+* Audit log and change history in a document store.
 
-El objetivo del proyecto es demostrar diseño multicapa, integración de tecnologías heterogéneas y aplicación de reglas de negocio coherentes.
-
----
-
-## 2. Arquitectura
-
-Arquitectura por capas:
-
-* **Controller**: exposición de endpoints REST.
-* **Service**: reglas de negocio y coordinación entre persistencias.
-* **Repository**: acceso a datos con JPA y MongoRepository.
-* **DTO**: contrato externo de la API.
-* **Domain**: entidades JPA.
-* **Mongo**: documentos y repositorios documentales.
-
-Separación clara entre modelo de dominio y modelo de exposición.
+The goal of the project is to demonstrate multilayer design, integration of heterogeneous technologies, and application of consistent business rules.
 
 ---
 
-## 3. Modelo de datos
+## 2. Architecture
 
-### Persistencia relacional (MySQL + JPA)
+Layered architecture:
 
-Entidades principales:
+* **Controller**: REST endpoint exposure.
+* **Service**: business rules and coordination between persistence layers.
+* **Repository**: data access via JPA and MongoRepository.
+* **DTO**: external API contract.
+* **Domain**: JPA entities.
+* **Mongo**: documents and document repositories.
+
+Clear separation between the domain model and the exposure model.
+
+---
+
+## 3. Data model
+
+### Relational persistence (MySQL + JPA)
+
+Main entities:
 
 * `Usuario`
 * `Plataforma`
 * `Obra`
 * `Resena`
 
-Relaciones:
+Relationships:
 
 * Obra N:1 Usuario
 * Obra N:1 Plataforma
 * Resena N:1 Usuario
 * Resena N:1 Obra
 
-Restricciones:
+Constraints:
 
-* Email único en Usuario.
-* Nombre único en Plataforma.
-* Validaciones de dominio en capa Service.
-* Enumeraciones normalizadas para tipo y estado.
+* Unique email in Usuario.
+* Unique name in Plataforma.
+* Domain validations in the Service layer.
+* Normalized enumerations for type and status.
 
-Consultas implementadas:
+Implemented queries:
 
-* Filtros combinados con paginación.
-* JOIN para recuperación de obras con reseñas.
-* Cálculo de media de nota por tipo.
+* Combined filters with pagination.
+* JOIN for retrieving works with reviews.
+* Average score calculation by type.
 
 ---
 
-### Persistencia documental (MongoDB)
+### Document persistence (MongoDB)
 
-Colecciones:
+Collections:
 
 **eventos**
 
-* Registro de acciones sobre entidades.
-* Incluye metadata y payload reducido.
+* Log of actions performed on entities.
+* Includes metadata and a reduced payload.
 
 **historial_obras**
 
-* Snapshot anterior y posterior en actualizaciones.
-* Permite reconstrucción de cambios.
+* Before and after snapshot on updates.
+* Allows change reconstruction.
 
-Consultas:
+Queries:
 
-* Búsqueda por usuario.
-* Búsqueda por entidad.
-* Rango temporal.
-* Métrica agregada de cambios por tipo de acción.
+* Search by user.
+* Search by entity.
+* Time range.
+* Aggregated metric of changes by action type.
 
-Decisión arquitectónica:
+Architectural decision:
 
-* SQL mantiene el estado actual consistente.
-* Mongo conserva trazabilidad sin contaminar el modelo relacional con datos históricos.
-
----
-
-## 4. Reglas de negocio
-
-* Creación de obra requiere datos obligatorios validados.
-* Validación de nota entre 0 y 10.
-* Existencia previa del usuario creador.
-* Creación automática de plataforma si no existe.
-* Registro automático de evento en cada operación relevante.
-* Snapshot completo en cada actualización de obra.
-
-La lógica de validación reside en la capa Service.
+* SQL maintains the current consistent state.
+* Mongo preserves traceability without polluting the relational model with historical data.
 
 ---
 
-## 5. Endpoints principales
+## 4. Business rules
 
-### Gestión de dominio
+* Work creation requires validated mandatory fields.
+* Score validation between 0 and 10.
+* Prior existence of the creating user.
+* Automatic platform creation if it does not exist.
+* Automatic event logging for each relevant operation.
+* Full snapshot on every work update.
+
+Validation logic resides in the Service layer.
+
+---
+
+## 5. Main endpoints
+
+### Domain management
 
 * POST /usuarios
 
@@ -151,7 +151,7 @@ La lógica de validación reside en la capa Service.
 
 * DELETE /resenas/{id}
 
-### Consulta de trazabilidad
+### Traceability queries
 
 * GET /eventos/usuario/{userId}
 * GET /eventos/entidad/{entityId}
@@ -161,25 +161,25 @@ La lógica de validación reside en la capa Service.
 * GET /historial-obras/rango
 * GET /historial-obras/metricas/cambios-por-accion
 
-Documentación interactiva disponible en Swagger UI.
+Interactive documentation available in Swagger UI.
 
 ---
 
-## 6. Requisitos y ejecución local
+## 6. Requirements and local setup
 
-Requisitos:
+Requirements:
 
 * Java 21
 * Maven 3.9+
 * MySQL
 * MongoDB
 
-Base de datos SQL esperada:
+Expected SQL database:
 
-* Nombre: mediatracker
-* Configuración editable en `application.properties`.
+* Name: mediatracker
+* Configuration editable in `application.properties`.
 
-Ejecución:
+Run:
 
 ```bash
 mvn clean spring-boot:run
@@ -193,21 +193,21 @@ http://localhost:8080/swagger-ui.html
 
 ---
 
-## 7. Calidad técnica demostrada
+## 7. Demonstrated technical quality
 
-* Separación de responsabilidades.
-* Diseño coherente de dominio.
-* Uso combinado de modelo relacional y documental.
-* Registro estructurado de auditoría.
-* DTOs para evitar exposición directa de entidades.
-* Consultas personalizadas y agregaciones.
+* Separation of concerns.
+* Coherent domain design.
+* Combined use of relational and document models.
+* Structured audit logging.
+* DTOs to avoid direct entity exposure.
+* Custom queries and aggregations.
 
 ---
 
-## 8. Líneas de evolución
+## 8. Future improvements
 
-* Integración de autenticación y autorización.
-* Tests de integración.
-* Gestión explícita de transacciones compuestas.
-* Validaciones adicionales en capa de entrada.
-* Contenerización con Docker.
+* Authentication and authorization integration.
+* Integration tests.
+* Explicit composite transaction management.
+* Additional validations at the input layer.
+* Containerization with Docker.
